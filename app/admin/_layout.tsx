@@ -1,9 +1,8 @@
-import React from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { TouchableOpacity, Text } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { colors } from '../../src/constants/theme';
 import { useAuthStore } from '../../src/hooks/useAuth';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 
 export default function AdminLayout() {
   const { session, isAdmin, loading } = useAuthStore();
@@ -26,7 +25,19 @@ export default function AdminLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="dashboard" options={{ title: 'Admin Dashboard' }} />
+      <Stack.Screen
+        name="dashboard"
+        options={{
+          title: 'Admin Dashboard',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={{ color: colors.white, fontSize: 16, marginRight: 8 }}>
+                ← Back
+              </Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
       <Stack.Screen
         name="create-post"
         options={{ title: 'Create Announcement' }}
