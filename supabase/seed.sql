@@ -550,64 +550,66 @@ insert into content_items (type, status, title, slug, summary, body, category, s
 -- MAP LOCATIONS
 -- ============================================
 
+-- map_x = longitude, map_y = latitude (real GPS coordinates, Keimyung Seongseo Campus)
+
 insert into map_locations (campus_code, name, category, description, building_code, map_x, map_y) values
 
 ('keimyung', 'Main Library (Dongsan Library)', 'library',
  'The main university library. Open Monday-Saturday. 24-hour reading room on 3rd floor. Printing services on 1st floor.',
- 'LIB', 50, 40),
+ 'LIB', 128.48870, 35.85580),
 
 ('keimyung', 'Student Cafeteria', 'cafeteria',
  'Main student dining hall. Korean set meals from 3,500 won. Breakfast, lunch, and dinner service.',
- 'B3-GF', 45, 55),
+ 'B3-GF', 128.48780, 35.85490),
 
 ('keimyung', 'International Office', 'international',
  'Support for international students: visa, enrollment, ARC, housing. Building 5, 2nd Floor, Room 204.',
- 'B5-204', 55, 35),
+ 'B5-204', 128.48950, 35.85620),
 
 ('keimyung', 'Administration Building', 'admin',
  'Main administration offices including registrar, student affairs, and finance.',
- 'B5', 55, 30),
+ 'B5', 128.48940, 35.85650),
 
 ('keimyung', 'Humanities Building', 'classroom',
  'Humanities department classrooms and faculty offices.',
- 'B1', 35, 45),
+ 'B1', 128.48720, 35.85550),
 
 ('keimyung', 'Social Sciences Building', 'classroom',
  'Social sciences department classrooms and seminar rooms.',
- 'B2', 40, 45),
+ 'B2', 128.48760, 35.85530),
 
 ('keimyung', 'Natural Sciences Building', 'classroom',
  'Natural sciences labs and lecture halls.',
- 'B3', 45, 50),
+ 'B3', 128.48800, 35.85470),
 
 ('keimyung', 'Engineering Building', 'classroom',
  'Engineering department with computer labs and workshops.',
- 'B7', 60, 50),
+ 'B7', 128.49020, 35.85480),
 
 ('keimyung', 'Arts Building', 'classroom',
  'Arts department with studios, practice rooms, and gallery.',
- 'B10', 30, 60),
+ 'B10', 128.48650, 35.85430),
 
 ('keimyung', 'Main Dormitory (D1)', 'dormitory',
  'Main international student dormitory. Includes cafeteria on ground floor and laundry room in basement.',
- 'D1', 70, 65),
+ 'D1', 128.49100, 35.85350),
 
 ('keimyung', 'Student Center', 'admin',
  'Student organizations, club rooms, convenience store, and copy center.',
- 'SC', 48, 42),
+ 'SC', 128.48850, 35.85560),
 
 ('keimyung', 'Sports Complex', 'sports',
  'Gymnasium, swimming pool, fitness center, and outdoor sports fields.',
- 'GYM', 25, 70),
+ 'GYM', 128.48600, 35.85320),
 
 ('keimyung', 'Health Center', 'medical',
  'Campus health clinic. Free basic medical services for students. Mon-Fri 9AM-5PM.',
- 'HC', 52, 38),
+ 'HC', 128.48900, 35.85600),
 
 ('keimyung', 'Convenience Store (CU)', 'cafeteria',
  '24-hour convenience store near the dormitory. Snacks, drinks, and basic supplies.',
- 'D1-GF', 68, 63),
+ 'D1-GF', 128.49080, 35.85370),
 
 ('keimyung', 'Faculty Cafeteria', 'cafeteria',
  'Higher-quality meals, slightly more expensive. Open to all students.',
- 'B5-1F', 55, 33);
+ 'B5-1F', 128.48930, 35.85640);
