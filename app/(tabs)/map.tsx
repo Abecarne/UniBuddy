@@ -1,35 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
-import { SearchBar } from '../../src/components/SearchBar';
-import { MapBuildingCard } from '../../src/components/MapBuildingCard';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import MapView, { Marker, Callout, PROVIDER_DEFAULT } from 'react-native-maps';
 import { LoadingState } from '../../src/components/LoadingState';
 import { ErrorState } from '../../src/components/ErrorState';
-import { EmptyState } from '../../src/components/EmptyState';
 import { fetchMapLocations } from '../../src/services/mapService';
-import { useLanguage } from '../../src/hooks/useLanguage';
 import { MAP_CATEGORIES } from '../../src/constants/categories';
 import type { MapLocation } from '../../src/types/map';
 import { colors, fontSize, spacing, borderRadius } from '../../src/constants/theme';
 
+// Keimyung University Seongseo Campus center
+const CAMPUS_REGION = {
+  latitude: 35.8554,
+  longitude: 128.4887,
+  latitudeDelta: 0.008,
+  longitudeDelta: 0.008,
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  classroom: '#3B82F6',
+  library: '#8B5CF6',
+  cafeteria: '#F59E0B',
+  admin: '#6B7280',
+  dormitory: '#10B981',
+  international: '#EC4899',
+  sports: '#EF4444',
+  medical: '#14B8A6',
+};
+
 export default function MapScreen() {
-  const t = useLanguage((s) => s.t);
+  const mapRef = useRef<MapView>(null);
   const [locations, setLocations] = useState<MapLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<MapLocation | null>(
-    null
-  );
 
   useEffect(() => {
     setLoading(true);
@@ -39,115 +41,60 @@ export default function MapScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = locations.filter((loc) => {
-    const matchesSearch =
-      !search || loc.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory =
-      !selectedCategory || loc.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState message={error} />;
 
   return (
     <View style={styles.container}>
-      <SearchBar value={search} onChangeText={setSearch} />
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipList}
-        style={styles.chipScroll}
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        provider={PROVIDER_DEFAULT}
+        mapType="satellite"
+        initialRegion={CAMPUS_REGION}
+        showsUserLocation={false}
+        showsCompass
+        showsScale
       >
-        <TouchableOpacity
-          style={[styles.chip, !selectedCategory && styles.chipActive]}
-          onPress={() => setSelectedCategory('')}
-        >
-          <Text
-            style={[styles.chipText, !selectedCategory && styles.chipTextActive]}
-          >
-            {t('allCategories')}
-          </Text>
-        </TouchableOpacity>
-        {MAP_CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.key}
-            style={[
-              styles.chip,
-              selectedCategory === cat.key && styles.chipActive,
-            ]}
-            onPress={() => setSelectedCategory(cat.key)}
-          >
-            <Text style={styles.chipIcon}>{cat.icon}</Text>
-            <Text
-              style={[
-                styles.chipText,
-                selectedCategory === cat.key && styles.chipTextActive,
-              ]}
+        {locations.map((loc) => {
+          if (loc.map_y == null || loc.map_x == null) return null;
+
+          const cat = MAP_CATEGORIES.find((c) => c.key === loc.category);
+          const pinColor = CATEGORY_COLORS[loc.category ?? ''] ?? colors.primary;
+
+          return (
+            <Marker
+              key={loc.id}
+              coordinate={{
+                latitude: loc.map_y,
+                longitude: loc.map_x,
+              }}
+              pinColor={pinColor}
+              title={loc.name}
+              description={loc.building_code ?? undefined}
             >
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.content}>
-        {loading ? (
-          <LoadingState />
-        ) : error ? (
-          <ErrorState message={error} />
-        ) : filtered.length === 0 ? (
-          <EmptyState title={t('noResults')} />
-        ) : (
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <MapBuildingCard
-                location={item}
-                onPress={setSelectedLocation}
-              />
-            )}
-          />
-        )}
-      </View>
-
-      <Modal
-        visible={!!selectedLocation}
-        transparent
-        animationType="slide"
-      >
-        <Pressable
-          style={styles.overlay}
-          onPress={() => setSelectedLocation(null)}
-        >
-          <View style={styles.detailCard}>
-            {selectedLocation && (
-              <>
-                <Text style={styles.detailName}>
-                  {selectedLocation.name}
-                </Text>
-                {selectedLocation.building_code && (
-                  <Text style={styles.detailCode}>
-                    Building: {selectedLocation.building_code}
-                  </Text>
-                )}
-                {selectedLocation.description && (
-                  <Text style={styles.detailDesc}>
-                    {selectedLocation.description}
-                  </Text>
-                )}
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setSelectedLocation(null)}
-                >
-                  <Text style={styles.closeText}>Close</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </Pressable>
-      </Modal>
+              <Callout tooltip>
+                <View style={styles.callout}>
+                  <View style={styles.calloutHeader}>
+                    <Text style={styles.calloutIcon}>{cat?.icon ?? '📍'}</Text>
+                    <View style={styles.calloutTitleWrap}>
+                      <Text style={styles.calloutTitle}>{loc.name}</Text>
+                      {loc.building_code && (
+                        <Text style={styles.calloutCode}>{loc.building_code}</Text>
+                      )}
+                    </View>
+                  </View>
+                  {loc.description && (
+                    <Text style={styles.calloutDesc} numberOfLines={3}>
+                      {loc.description}
+                    </Text>
+                  )}
+                </View>
+              </Callout>
+            </Marker>
+          );
+        })}
+      </MapView>
     </View>
   );
 }
@@ -155,87 +102,52 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
-  chipScroll: {
-    maxHeight: 48,
-    marginBottom: spacing.sm,
+  map: {
+    flex: 1,
   },
-  chipList: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
+  callout: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm + 4,
+    width: 220,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  chip: {
+  calloutHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: spacing.xs,
   },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+  calloutIcon: {
+    fontSize: 20,
+    marginRight: spacing.sm,
   },
-  chipIcon: {
-    fontSize: fontSize.sm,
-    marginRight: spacing.xs,
-  },
-  chipText: {
-    fontSize: fontSize.sm,
-    color: colors.text,
-  },
-  chipTextActive: {
-    color: colors.white,
-    fontWeight: '600',
-  },
-  content: {
+  calloutTitleWrap: {
     flex: 1,
   },
-  list: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  detailCard: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  detailName: {
-    fontSize: fontSize.xl,
+  calloutTitle: {
+    fontSize: fontSize.sm,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: spacing.sm,
   },
-  detailCode: {
-    fontSize: fontSize.sm,
+  calloutCode: {
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
-    marginBottom: spacing.sm,
+    marginTop: 1,
   },
-  detailDesc: {
-    fontSize: fontSize.md,
-    color: colors.text,
-    lineHeight: 24,
-    marginBottom: spacing.lg,
-  },
-  closeButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm + 4,
-    alignItems: 'center',
-  },
-  closeText: {
-    color: colors.white,
-    fontSize: fontSize.md,
-    fontWeight: '600',
+  calloutDesc: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    lineHeight: 16,
   },
 });
